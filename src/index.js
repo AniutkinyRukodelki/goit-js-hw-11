@@ -22,6 +22,7 @@ btnDelletResult.style.display = 'none';
 let page = 1;
 let numberStory = 1;
 
+
 if (!localStorage.getItem(numberStory) === null) {
   numberStory = localStorage.getItem(numberStory);
 }
@@ -96,9 +97,17 @@ export function zeroing() {
 }
 
 function importElm() {
-  const textSearchs = formInput[0].value;
-
-  fetchApi(textSearchs, page)
+  const textSearchs = formInput.children.namedItem('searchQuery').value.trim();
+  if (textSearchs === '') {
+    noInfoForSearch();
+    return;
+  }
+  
+  function noInfoForSearch() {
+  Notiflix.Notify.failure('Please specify your search query.');
+  }
+  
+   fetchApi(textSearchs, page)
     .then(result => {
       if (result.totalHits === 0) {
         Notiflix.Notify.failure(
@@ -157,9 +166,15 @@ function creatE(objImages, textSearchs) {
   creatElmHtml(objImages);
 }
 
+const lightbox = new SimpleLightbox('.gallery a', {
+  captionsData: 'alt',
+  captionDelay: 250,
+  overlayOpacity: 0.7,
+});
+
 function addElmHtml(arr, objImages) {
   gallery.insertAdjacentHTML('beforeend', arr);
-  lightbox();
+  lightbox.refresh();
   page++;
 
   if (objImages.totalHits > 40) {
@@ -167,47 +182,36 @@ function addElmHtml(arr, objImages) {
   }
 }
 
-function lightbox() {
-  const lightbox = new SimpleLightbox('.gallery a', {
-    captionsData: 'alt',
-    captionDelay: 250,
-    overlayOpacity: 0.7,
-  });
-}
 function creatElmHtml(objImages) {
   const arrObjElm = objImages.hits;
 
-  const markup = [];
-
-  arrObjElm.map(element =>
-    markup.push(
-      `<a class="gallery__item" onclick="event.preventDefault()"
-     href="${element.largeImageURL}">
-     <div class="photo-card">
-      <img src="${element.webformatURL}" alt="${element.tags}" loading="lazy"/>
-      <div class="info">
-        <p class="info-item">
-          <b>Likes</b>
-      ${element.likes}
-        </p>
-        <p class="info-item">
-          <b>Views</b>
-      ${element.views}
-        </p>
-        <p class="info-item">
-          <b>Comments</b>
+  const markup = arrObjElm.map ( (element) => {
+    return `<a class="gallery__item" onclick="event.preventDefault()"
+    href="${element.largeImageURL}">
+    <div class="photo-card">
+    <img src="${element.webformatURL}" alt="${element.tags}" loading="lazy"/>
+    <div class="info">
+    <p class="info-item">
+    <b>Likes</b>
+    ${element.likes}
+    </p>
+    <p class="info-item">
+    <b>Views</b>
+    ${element.views}
+    </p>
+    <p class="info-item">
+    <b>Comments</b>
     ${element.comments}
-        </p>
-        <p class="info-item">
-          <b>Downloads</b>
-    ${element.downloads}
-        </p>
-      </div>
-    </div>
-    </a>`
-    )
-  );
+    </p>
+<p class="info-item">
+<b>Downloads</b>
+${element.downloads}
+</p>
+</div>
+</div>
+</a>`;
+  }
+  )
 
-  addElmHtml(markup.join(' '), objImages);
-
-
+addElmHtml(markup.join(' '), objImages);
+};
